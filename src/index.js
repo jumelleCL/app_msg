@@ -26,10 +26,11 @@ io.on('connection',(socket) => {
     })
 })
 app.use(logger('dev'))
+app.use(express.static(path.join(__dirname, 'dist')));
 
 
 app.get('/',(req, res)=> {
-    res.sendFile(process.cwd() + '/src/views/index.html')
+    res.sendFile(path.join(__dirname,'src','view','index.html'))
 })
 
 server.listen(port,()=>{
