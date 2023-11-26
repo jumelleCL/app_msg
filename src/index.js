@@ -20,7 +20,7 @@ const __dirname = path.dirname(__filename);
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
-app.use(session({ secret: 'your-secret-key', resave: false, saveUninitialized: true }));
+app.use(session({ secret: 'A4gQeWBHbrsUnSOaA4gQeWBHbrsUnSOaA4gQeWBHbrsUnSOa', resave: false, saveUninitialized: true }));
 app.use(express.static('src'));
 
 const connectToDatabase = async () => {
@@ -42,7 +42,7 @@ const obtenerNombreUnico = (socket) => {
         return user;
     }else{
         const address = socket.handshake.address;
-        return `Guest${address}`;
+        return `Guest`;
     }
 };
 
@@ -84,7 +84,7 @@ const startSocketIO = async () => {
 };
 
 app.get('/', (req, res) => {
-    if (!req.session.username) {
+    if (!req.session.username || req.session.username == 'Guest') {
         return res.redirect('/login');
     }
     res.sendFile(path.resolve('src', 'views', 'index.html'));
