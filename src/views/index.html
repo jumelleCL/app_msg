@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat</title>
+    <link href="/styles.css">
     <style>*,
         *::before,
         *::after{
@@ -66,18 +67,21 @@
         #form > button:hover{
             background: #0cf;
         }
-        </style>
+        .logout{
+            color: #f31
+        }</style>
 </head>
 <body>
     <section id="chat">
         <ul id="messages"></ul>
-        <form id="form">
+         <form id="form">
             <input type="text" name="message" id="input" placeholder="Type a message" autocomplete="off">
-            <button type="submit">Enviar</button>
+            <button type="submit">Send</button>
         </form>
     </section>
+    <a href="/login" class="logout">Log Out</a>
     <script type="module">
-        import {io} from 'https://cdn.socket.io/4.3.2/socket.io.esm.min.js'
+        import { io } from 'https://cdn.socket.io/4.3.2/socket.io.esm.min.js'
         const socket = io({
             auth: {
                 serverOffset: 0
@@ -87,14 +91,14 @@
         const form = document.getElementById('form')
         const input = document.getElementById('input')
         const messages = document.getElementById('messages')
-        
-        socket.on('chat message',(msg, serverOffset)=>{
-            const item = `<li>${msg}</li>`
-            messages.insertAdjacentHTML('beforeend',item)
+
+        socket.on('chat message', (msg, username, serverOffset) => {
+            const item = `<li>${username}: ${msg}</li>`
+            messages.insertAdjacentHTML('beforeend', item)
             socket.auth.serverOffset = serverOffset
         })
 
-        form.addEventListener('submit',(e)=>{
+        form.addEventListener('submit', (e) => {
             e.preventDefault()
 
             if (input.value) {

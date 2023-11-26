@@ -1,98 +1,124 @@
+import express from 'express';
+import path from 'path';
+import session from 'express-session';
 import dotenv from 'dotenv';
-dotenv.config()
+import { MongoClient } from 'mongodb';  // Elimina { ObjectId }
 
-import express from "express";
-import logger from 'morgan';
-import { MongoClient } from "mongodb";
+import { Server } from 'socket.io';
+import { createServer } from 'http';
 
-import { Server } from "socket.io";
-import {createServer} from 'http';
+dotenv.config();
 
+const port = process.env.PORT ?? 8000;
 
-const port = process.env.PORT ?? 3000
+const app = express();
+const server = createServer(app);
+const io = new Server(server);
 
-const app = express()
-const server = createServer(app)
-const io = new Server(server,{
-    connectionStateRecovery: {}
-})
+const __filename = new URL(import.meta.url).pathname;
+const __dirname = path.dirname(__filename);
 
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.urlencoded({ extended: true }));
+app.use(session({ secret: 'your-secret-key', resave: false, saveUninitialized: true }));
+app.use(express.static('src'));
 
 const connectToDatabase = async () => {
     try {
         const client = await MongoClient.connect(process.env.MONGODB_URI);
         console.log('Connected to MongoDB');
-        const db = client.db();
-
-        const collection = db.collection('messages');
-
-        const collections = await db.listCollections({ name: 'messages' }).toArray();
-        const collectionExists = collections.length > 0;
-
-        if (!collectionExists) {
-            await db.createCollection('messages');
-        }
-
-        return db;
+        return client.db('chatApp');
     } catch (err) {
         console.error('Error connecting to MongoDB', err);
         throw err;
     }
 };
 
-let db = await connectToDatabase();
-
-io.on('connection', async (socket) => {
-    console.log('a user has connected');
-
-    const messagesCollection = db.collection('messages');
-    const collections = await db.listCollections().toArray();
-    
-    const collectionExists = collections.some((collection) => collection.name === 'messages');
-
-    if (!collectionExists) {
-        await db.createCollection('messages');
+let db;
+let usersCollection;
+let user;
+const obtenerNombreUnico = (socket) => {
+    if (user) {
+        return user;
+    }else{
+        const address = socket.handshake.address;
+        return `Guest${address}`;
     }
+};
 
-    const cursor = messagesCollection.find();
-    await cursor.forEach((doc) => {
-        socket.emit('chat message', doc.content, doc._id.toString());
+const startSocketIO = async () => {
+    db = await connectToDatabase();
+    usersCollection = db.collection('users');
+
+    io.on('connection', async (socket) => {
+        socket.username = obtenerNombreUnico(socket);
+
+        console.log(`User ${socket.username} has connected`);
+
+        socket.on('disconnect', () => {
+            console.log(`User ${socket.username} has disconnected`);
+            if (socket.handshake.session) {
+                socket.handshake.session.destroy((err) => {
+                    if (err) {
+                        console.error('Error destroying session:', err);
+                    }
+                });
+            }
+        });
+
+        socket.on('chat message', async (msg) => {
+            try {
+                const result = await db.collection('messages').insertOne({ content: msg, sender: socket.username });
+                io.emit('chat message', msg, socket.username, result.insertedId.toString());
+            } catch (e) {
+                console.error(e);
+                return;
+            }
+        });
+
+        const messages = await db.collection('messages').find().toArray();
+        messages.forEach((message) => {
+            io.to(socket.id).emit('chat message', message.content, message.sender, message._id.toString());
+        });
     });
+};
 
-    socket.on('disconnect', () => {
-        console.log('user has disconnected');
-    });
+app.get('/', (req, res) => {
+    if (!req.session.username) {
+        return res.redirect('/login');
+    }
+    res.sendFile(path.resolve('src', 'views', 'index.html'));
+});
 
-    socket.on('chat message', async (msg) => {
-        try {
-            const result = await db.collection('messages').insertOne({ content: msg });
-            io.emit('chat message', msg, result.insertedId.toString());
-        } catch (e) {
-            console.error(e);
-            return;
+app.get('/login', (req, res) => {
+    res.sendFile(path.resolve('src','views', 'login.html'));
+});
+
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    const passwordAsInt = parseInt(password, 10);
+    try {
+        const userRecord = await usersCollection.findOne({ username, password: passwordAsInt });
+
+        if (userRecord) {
+            req.session.username = username;
+            res.json({ success: true });
+            user = username;
+        } else {
+            res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
         }
-    });
-
-    if (!socket.recovered) {
-        try {
-            const cursor = db.collection('messages').find({ _id: { $gt: socket.handshake.auth.serverOffset ?? 0 } });
-            await cursor.forEach((doc) => {
-                socket.emit('chat message', doc.content, doc._id.toString());
-            });
-        } catch (e) {
-            console.error(e);
-            return;
-        }
+    } catch (error) {
+        console.error('Error al iniciar sesión:', error);
+        res.status(500).json({ success: false, message: 'Error interno del servidor' });
     }
 });
 
-
-app.use(logger('dev'))
-
-app.get('/', (req, res) => {
-    res.sendFile(process.cwd() + '/src/views/index.html')
-})
+app.get('/register', (req, res) => {
+    res.sendFile(path.resolve('src','views', 'register.html'));
+});
 
 server.listen(port, () => {
     console.log(`Server running on port ${port}`);
-})
+});
+
+startSocketIO();
