@@ -1,53 +1,77 @@
 import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
+import { Form, Button } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
-  // eslint-disable-next-line
   const [username, setUsername] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const socket = io({
-      auth: {
-        serverOffset: 0,
-      },
+    // const checkAuth = async () => {
+    //   try {
+    //     const response = await axios.get('http://localhost:8000/check-auth', { withCredentials: true });
+    //     if (response.data.authenticated) {
+    //       setUsername(response.data.username);
+    //     } else {
+    //       navigate('/login');
+    //     }
+    //   } catch (error) {
+    //     console.error('Error checking authentication', error);
+    //     navigate('/login');
+    //   }
+    // };
+
+    // checkAuth();
+
+    const socket = io('http://localhost:8000', {
+      withCredentials: true,
+      transports: ['websocket', 'polling'],
     });
 
     socket.on('connect', () => {
-      setUsername(socket.username);
+      socket.emit('load messages');
     });
 
-    socket.on('chat message', (msg, username, serverOffset) => {
-      setMessages(prevMessages => [...prevMessages, { msg, username, serverOffset }]);
+    socket.on('chat message', (msg) => {
+      setMessages(prevMessages => [...prevMessages, msg]);
+    });
+
+    socket.on('load messages', (msgs) => {
+      setMessages(msgs);
     });
 
     return () => socket.disconnect();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [navigate]);
 
   const handleSubmit = (event) => {
     event.preventDefault();
     if (inputMessage) {
+      const socket = io('http://localhost:8000', {
+        withCredentials: true,
+        transports: ['websocket', 'polling'],
+      });
+      socket.emit('chat message', inputMessage, username);
       setInputMessage('');
     }
   };
 
   return (
-    <div className="screen">
-      <section id="contacts">
-        <ul id="chats">
-          {/* Renderizar la lista de chats */}
-        </ul>
-        <a href="/login" className="logout">Log Out</a>
+    <div className="screen" style={{ height: 'calc(100vh - 60px)' }}>
+      <section id="contacts" className="p-3">
+        <Button href="/login" className="logout" variant="danger">Log Out</Button>
       </section>
-      <section id="chat">
-        <ul id="messages">
-          {messages.map((message, index) => (
-            <li key={index}>{message.username}: {message.msg}</li>
+      <section id="chat" className="p-3">
+        <ul id="messages" className="list-group mb-3">
+          {messages.map((message) => (
+            <li key={message._id} className="list-group-item">{message.sender}: {message.content}</li>
           ))}
         </ul>
-        <form onSubmit={handleSubmit} id="form">
-          <input
+        <Form onSubmit={handleSubmit} id="form" className="d-flex">
+          <Form.Control
             type="text"
             name="message"
             id="input"
@@ -55,9 +79,10 @@ const Chat = () => {
             autoComplete="off"
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
+            className="flex-grow-1 me-2"
           />
-          <button type="submit">Send</button>
-        </form>
+          <Button type="submit">Send</Button>
+        </Form>
       </section>
     </div>
   );

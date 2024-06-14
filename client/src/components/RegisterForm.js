@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { Form, Button } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 
 const RegisterForm = () => {
     const [username, setUsername] = useState('');
@@ -30,17 +32,40 @@ const RegisterForm = () => {
         }
     };
 
-    return (
-        <div>
-            <h1>Messages Register</h1>
-            <form onSubmit={handleSubmit}>
-                <input type="text" className="elemLogin" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" required />
-                <input type="password" className="elemLogin" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required />
-                <button type="submit" className="elemLogin">Register</button>
-            </form>
-            <div id="loginStatus">{registerStatus}</div>
+    return ((
+        <div className="d-flex align-items-center justify-content-center" style={{height: 'calc(100vh - 60px)'}}>
+            <div className="bg-dark-subtle p-4" style={{ maxWidth: '400px' }}>
+                <h1 className="text-center">Sing up</h1>
+                <Form onSubmit={handleSubmit}>
+                    <Form.Group className="mb-3">
+                        <Form.Control
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            placeholder="Username"
+                            required
+                        />
+                    </Form.Group>
+                    <Form.Group className="mb-3">
+                        <Form.Control
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Password"
+                            required
+                        />
+                    </Form.Group>
+                    <Button variant="primary" type="submit" className="w-100">
+                        Register
+                    </Button>
+                </Form>
+                <div id="loginStatus" className="text-center mt-3">{registerStatus}</div>
+                <div className="text-center mt-3">
+                    Already have an account? <Link to="/login">Login here</Link>
+                </div>
+            </div>
         </div>
-    );
-};
+    ));
+    };
 
 export default RegisterForm;
