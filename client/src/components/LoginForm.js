@@ -11,8 +11,8 @@ const LoginForm = () => {
 
     try {
       const response = await axios.post('http://localhost:8000/login', {
-        username,
-        password,
+        username: username,
+        password: password,
       });
 
       const data = response.data;
