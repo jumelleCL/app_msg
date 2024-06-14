@@ -6,12 +6,14 @@
   "type": "module",
   "scripts": {
     "dev": "node --trace-warnings ./src/index.js",
+    "start": "node ./src/index.cjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "4.18.2",
     "express-session": "1.17.3",
