@@ -24,14 +24,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'A4gQeWBHbrsUnSOaAA3gQeWBHbrsUnSOaAagQeWBHbrsUnSOa',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   store: connectDB().sessionStore,
   cookie: {
-    secure: false,
+    secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    sameSite: 'lax'
+    sameSite: 'strict',
+    maxAge: 1000 * 60 * 60 * 24 
   }
 }));
 

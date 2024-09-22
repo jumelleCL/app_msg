@@ -23,26 +23,41 @@ const defineRoutes = (app, db) => {
     res.sendFile(path.join(__dirname, '../../client/public/index.html'));
   });
 
-  app.post('/login', (req, res) => {
+  app.post('/login', async (req, res) => {
     console.log('intento de login');
-    authenticate(req.body.username, req.body.password, (err, user) => {
-      console.log('auntenticacion');
-      if (err) {
-        console.error('Authentication error:', err);
-        return res.status(500).json({ success: false, message: 'Error interno del servidor' });
+    const { username, password } = req.body;
+  
+    try {
+      const userRecord = await usersCollection.findOne({ username });
+  
+      if (!userRecord) {
+        console.log('error de credenciales');
+        return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
       }
-      if (user) {
-        console.log('usuario existe')
+  
+      passwordModule({ password, salt: userRecord.passwordSalt }, (err, pass, salt, hash) => {
+        if (err) {
+          console.error('Error comparing password:', err);
+          return res.status(500).json({ success: false, message: 'Error interno del servidor' });
+        }
+  
+        if (hash !== userRecord.password) {
+          console.log('error de credenciales');
+          return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
+        }
+  
+        console.log('usuario existe');
         req.session.regenerate(() => {
-          req.session.username = user.username;
+          req.session.username = userRecord.username;
           res.json({ success: true });
         });
-      } else {
-        console.log('error de credenciales');
-        res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
-      }
-    });
+      });
+    } catch (error) {
+      console.error('Authentication error:', error);
+      res.status(500).json({ success: false, message: 'Error interno del servidor' });
+    }
   });
+  
 
   app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, '../../client/public/index.html'));
