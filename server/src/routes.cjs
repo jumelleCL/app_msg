@@ -83,7 +83,7 @@ const defineRoutes = (app, db) => {
               return res.status(500).json({ success: false, message: 'Error interno del servidor' });
             }
             req.session.username = username;
-            res.json({ success: true });
+            return res.json({ success: true, message: 'Usuario creado correctamente' });
           });
         });
       }

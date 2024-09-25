@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import axios from 'axios'; // Línea modificada
 
 const RegisterForm = () => {
     const [username, setUsername] = useState('');
@@ -11,18 +12,16 @@ const RegisterForm = () => {
         event.preventDefault();
 
         try {
-            const response = await fetch('http://localhost:8000/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username, password }),
+            const response = await axios.post('http://localhost:8000/register', {
+                username,
+                password,
             });
 
-            const data = await response.json();
+            const data = response.data;
+            console.log(data.message);
 
             if (data.success) {
-                window.location.href = '/chat';
+                window.location.href = '/login';
             } else {
                 setRegisterStatus(data.message || 'Error registrando usuario');
             }
@@ -32,10 +31,10 @@ const RegisterForm = () => {
         }
     };
 
-    return ((
+    return (
         <div className="d-flex align-items-center justify-content-center" style={{height: 'calc(100vh - 60px)'}}>
             <div className="bg-dark-subtle p-4" style={{ maxWidth: '400px' }}>
-                <h1 className="text-center">Sing up</h1>
+                <h1 className="text-center">Sign up</h1>
                 <Form onSubmit={handleSubmit}>
                     <Form.Group className="mb-3">
                         <Form.Control
@@ -65,7 +64,7 @@ const RegisterForm = () => {
                 </div>
             </div>
         </div>
-    ));
-    };
+    );
+};
 
 export default RegisterForm;
