@@ -19,6 +19,7 @@ const defineRoutes = (app, db) => {
     });
   });
 
+
   app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, '../../client/public/index.html'));
   });
@@ -31,7 +32,7 @@ const defineRoutes = (app, db) => {
       const userRecord = await usersCollection.findOne({ username });
   
       if (!userRecord) {
-        console.log('error de credenciales');
+        console.log('error de credenciales 1');
         return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
       }
   
@@ -42,13 +43,14 @@ const defineRoutes = (app, db) => {
         }
   
         if (hash !== userRecord.password) {
-          console.log('error de credenciales');
+          console.log('error de credenciales 2');
           return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
         }
   
         console.log('usuario existe');
         req.session.regenerate(() => {
           req.session.username = userRecord.username;
+          console.log('logged');
           res.json({ success: true });
         });
       });
@@ -102,18 +104,15 @@ const defineRoutes = (app, db) => {
     }
   }
 
-  function authenticate(username, password, callback) {
+  function authenticate(username, callback) {
     usersCollection.findOne({ username }, (err, user) => {
       if (err) return callback(err);
       if (!user) return callback(null, null);
-
-      passwordModule({ password, salt: user.passwordSalt }, (err, pass, salt, hash) => {
-        if (err) return callback(err);
-        if (hash === user.password) return callback(null, user);
-        callback(null, null);
-      });
     });
   }
+  app.get('/check-auth', async (req, res) => {
+    authenticate(req.session.username);
+  });
 };
 
 module.exports = { defineRoutes };

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import axios from 'axios'; // Línea modificada
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios'; 
 
 const RegisterForm = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [registerStatus, setRegisterStatus] = useState('');
+    const navigate = useNavigate();
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -21,7 +23,7 @@ const RegisterForm = () => {
             console.log(data.message);
 
             if (data.success) {
-                window.location.href = '/login';
+                navigate('/login');
             } else {
                 setRegisterStatus(data.message || 'Error registrando usuario');
             }

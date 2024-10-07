@@ -11,21 +11,26 @@ const Chat = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // const checkAuth = async () => {
-    //   try {
-    //     const response = await axios.get('http://localhost:8000/check-auth', { withCredentials: true });
-    //     if (response.data.authenticated) {
-    //       setUsername(response.data.username);
-    //     } else {
-    //       navigate('/login');
-    //     }
-    //   } catch (error) {
-    //     console.error('Error checking authentication', error);
-    //     navigate('/login');
-    //   }
-    // };
+    const checkAuth = async () => {
+      try {
+        var user = localStorage.getItem('username');
+        const response = await axios.get('http://localhost:8000/check-auth', { 
+          username: user,
+          withCredentials: true, 
+        });
+        if (response.data.authenticated) {
+          setUsername(response.data.username);
+          console.log('user:'+username);
+        } else {
+          navigate('/login');
+        }
+      } catch (error) {
+        console.error('Error checking authentication', error);
+        navigate('/login');
+      }
+    };
 
-    // checkAuth();
+    checkAuth();
 
     const socket = io('http://localhost:8000', {
       withCredentials: true,
@@ -55,6 +60,8 @@ const Chat = () => {
         transports: ['websocket', 'polling'],
       });
       socket.emit('chat message', inputMessage, username);
+      console.log(username);
+      
       setInputMessage('');
     }
   };

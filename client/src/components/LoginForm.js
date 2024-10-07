@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const LoginForm = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginStatus, setLoginStatus] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -17,7 +19,8 @@ const LoginForm = () => {
       console.log(data);
 
       if (data.success) {
-        window.location.href = '/chat';
+        localStorage.setItem('user', username);
+        navigate('/chat');
       } else {
         setLoginStatus(data.message || 'Credenciales incorrectas');
       }
