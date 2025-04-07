@@ -50,7 +50,7 @@ const Chat = () => {
     });
 
     return () => socket.disconnect();
-  }, [navigate]);
+  }, [navigate, username]);
 
   const handleSubmit = (event) => {
     event.preventDefault();

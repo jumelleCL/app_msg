@@ -104,13 +104,16 @@ const defineRoutes = (app, db) => {
     }
   }
 
-  function authenticate(username, callback) {
+  function authenticate(username) {
     usersCollection.findOne({ username }, (err, user) => {
       if (err) return callback(err);
       if (!user) return callback(null, null);
+      return username;
     });
   }
   app.get('/check-auth', async (req, res) => {
+    console.log(req.session.username);
+    
     authenticate(req.session.username);
   });
 };

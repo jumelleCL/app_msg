@@ -19,7 +19,6 @@ const LoginForm = () => {
       console.log(data);
 
       if (data.success) {
-        localStorage.setItem('user', username);
         navigate('/chat');
       } else {
         setLoginStatus(data.message || 'Credenciales incorrectas');
